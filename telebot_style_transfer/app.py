@@ -1,6 +1,7 @@
 from os import getenv, remove, path
 from telebot.async_telebot import AsyncTeleBot
 import asyncio
+import telebot
 from telebot import types
 
 import numpy as np
@@ -101,8 +102,7 @@ def extract_layers(layers, img, model=None):
     return la.features
 
 
-async def transfer(content_image, style_image):
-
+def transfer(content_image, style_image):
 
     vgg = models.vgg19(pretrained=True).features
     for param in vgg.parameters():
@@ -144,24 +144,24 @@ async def transfer(content_image, style_image):
 '''конец секции'''
 
 
-bot = AsyncTeleBot(TOKEN)
+bot = telebot.TeleBot(TOKEN)
 
 
 @bot.message_handler(commands=["help", "start", "main"])
-async def bot_help(message):
-    await bot.send_message(message.chat.id, f'Hi, {message.from_user.first_name}!'
+def bot_help(message):
+    bot.send_message(message.chat.id, f'Hi, {message.from_user.first_name}!'
                                             f' Бот предназначен для переноса стиля'
                                             ' с одного изображения на другое, '
                                             ' пожалуйста, загрузите фото для обработки')
 
 
 @bot.message_handler(content_types=['photo'])
-async def bot_get_photo(message):
+def bot_get_photo(message):
 
     try:
-        file_info = await bot.get_file(message.photo[-1].file_id)
+        file_info = bot.get_file(message.photo[-1].file_id)
         print(file_info, type(file_info), file_info.file_path)
-        downloaded_file = await bot.download_file(file_info.file_path)
+        downloaded_file = bot.download_file(file_info.file_path)
 
         if path.exists('.\images' + '\content_' + str(message.chat.id) + '.jpg'):
             src = '.\own_styles' + '\style_' + str(message.chat.id) + '.jpg'
@@ -170,8 +170,8 @@ async def bot_get_photo(message):
             file = open('.\photo.jpg', 'rb')
             style_image = image_loader('.\own_styles' + '\style_' + str(message.chat.id) + '.jpg')
             content_image = image_loader('.\images' + '\content_' + str(message.chat.id) + '.jpg')
-            response = await transfer(content_image, style_image)
-            await bot.send_photo(message.chat.id, response)
+            response = transfer(content_image, style_image)
+            bot.send_photo(message.chat.id, response)
             remove('.\images' + '\content_' + str(message.chat.id) + '.jpg')
             return
 
@@ -182,16 +182,16 @@ async def bot_get_photo(message):
             style = True
 
     except Exception as e:
-        await bot.reply_to(message,e )
+        bot.reply_to(message,e )
 
     markup = types.InlineKeyboardMarkup()
     markup.add(types.InlineKeyboardButton("Выбрать стиль", callback_data='choose'))
     markup.add(types.InlineKeyboardButton("Загрyзить стиль", callback_data='load'))
-    await bot.reply_to(message, 'Супер! Теперь необходимо изображение для стиля', reply_markup = markup)
+    bot.reply_to(message, 'Супер! Теперь необходимо изображение для стиля', reply_markup = markup)
 
 
 @bot.callback_query_handler(func=lambda callback: True)
-async def callback_message(callback):
+def callback_message(callback):
     match callback.data:
         case 'choose':
             markup = types.InlineKeyboardMarkup()
@@ -203,7 +203,7 @@ async def callback_message(callback):
             btn5 = types.InlineKeyboardButton("Уорхол", callback_data='warhol')
             btn6 = types.InlineKeyboardButton("Дали", callback_data='dali')
             markup.row(btn4, btn5, btn6)
-            await bot.send_message(callback.message.chat.id, 'Доступные стили', reply_markup = markup)
+            bot.send_message(callback.message.chat.id, 'Доступные стили', reply_markup = markup)
         case 'load':
             pass
             #await bot.send_message(callback.message.chat.id, 'Пока не знаю как реализовать')
@@ -212,63 +212,65 @@ async def callback_message(callback):
             try:
                 content_image = image_loader('.\images' + '\content_' + str(callback.message.chat.id) + '.jpg')
             except Exception as e:
-                await bot.reply_to(callback.message, e)
+                bot.reply_to(callback.message, e)
 
-            response = await transfer(content_image, style_image)
-            await bot.send_photo(callback.message.chat.id, response)
+            print(f'working 1 for {callback.message.chat.id}')
+            response = transfer(content_image, style_image)
+            bot.send_photo(callback.message.chat.id, response)
             remove('.\images' + '\content_' + str(callback.message.chat.id) + '.jpg')
         case 'monet':
             style_image = image_loader('.\styles\Monet.jpg')
             try:
                 content_image = image_loader('.\images' + '\content_' + str(callback.message.chat.id) + '.jpg')
             except Exception as e:
-                await bot.reply_to(callback.message, e)
+                bot.reply_to(callback.message, e)
 
-            response = await transfer(content_image, style_image)
-            await bot.send_photo(callback.message.chat.id, response)
+            print(f'working 2 for {callback.message.chat.id}')
+            response = transfer(content_image, style_image)
+            bot.send_photo(callback.message.chat.id, response)
             remove('.\images' + '\content_' + str(callback.message.chat.id) + '.jpg')
         case 'picaso':
             style_image = image_loader('.\styles\Picaso.jpg')
             try:
                 content_image = image_loader('.\images' + '\content_' + str(callback.message.chat.id) + '.jpg')
             except Exception as e:
-                await bot.reply_to(callback.message, e)
+                bot.reply_to(callback.message, e)
 
-            response = await transfer(content_image, style_image)
-            await bot.send_photo(callback.message.chat.id, response)
+            response = transfer(content_image, style_image)
+            bot.send_photo(callback.message.chat.id, response)
             remove('.\images' + '\content_' + str(callback.message.chat.id) + '.jpg')
         case 'roche':
             style_image = image_loader('.\styles\Roche.jpg')
             try:
                 content_image = image_loader('.\images' + '\content_' + str(callback.message.chat.id) + '.jpg')
             except Exception as e:
-                await bot.reply_to(callback.message, e)
+                bot.reply_to(callback.message, e)
 
-            response = await transfer(content_image, style_image)
-            await bot.send_photo(callback.message.chat.id, response)
+            response = transfer(content_image, style_image)
+            bot.send_photo(callback.message.chat.id, response)
             remove('.\images' + '\content_' + str(callback.message.chat.id) + '.jpg')
         case 'warhol':
             style_image = image_loader('.\styles\Warhol.jpg')
             try:
                 content_image = image_loader('.\images' + '\content_' + str(callback.message.chat.id) + '.jpg')
             except Exception as e:
-                await bot.reply_to(callback.message, e)
+                bot.reply_to(callback.message, e)
 
-            response = await transfer(content_image, style_image)
-            await bot.send_photo(callback.message.chat.id, response)
+            response = transfer(content_image, style_image)
+            bot.send_photo(callback.message.chat.id, response)
             remove('.\images' + '\content_' + str(callback.message.chat.id) + '.jpg')
         case 'dali':
             style_image = image_loader('.\styles\dali.jpg')
             try:
                 content_image = image_loader('.\images' + '\content_' + str(callback.message.chat.id) + '.jpg')
             except Exception as e:
-                await bot.reply_to(callback.message, e)
+                bot.reply_to(callback.message, e)
 
-            response = await transfer(content_image, style_image)
-            await bot.send_photo(callback.message.chat.id, response)
+            response = transfer(content_image, style_image)
+            bot.send_photo(callback.message.chat.id, response)
             remove('.\images' + '\content_' + str(callback.message.chat.id) + '.jpg')
 
 
 # bot.delete_webhook()
 
-asyncio.run(bot.polling())
+bot.polling(none_stop=True)
