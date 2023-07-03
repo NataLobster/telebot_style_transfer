@@ -174,8 +174,10 @@ def bot_get_photo(message):
 
             style_image = image_loader('.\own_styles' + '\style_' + str(message.chat.id) + '.jpg')
             content_image = image_loader('.\images' + '\content_' + str(message.chat.id) + '.jpg')
+            bot.send_message(message.chat.id, 'Ожидайте, я работаю')
             response = transfer(content_image, style_image)
             bot.send_photo(message.chat.id, response)
+            bot.send_message(message.chat.id, "Если понравилось, можете загрузить еще фото")
             remove('.\images' + '\content_' + str(message.chat.id) + '.jpg')
             return
 
@@ -194,85 +196,56 @@ def bot_get_photo(message):
     bot.reply_to(message, 'Супер! Теперь необходимо изображение для стиля', reply_markup = markup)
 
 
+@bot.callback_query_handler(func=lambda callback: callback.data == 'choose')
+def callback_message(callback):
+    markup = types.InlineKeyboardMarkup()
+    btn1 = types.InlineKeyboardButton("Ван-Гог", callback_data='van_gogh')
+    btn2 = types.InlineKeyboardButton("Моне", callback_data='monet')
+    btn3 = types.InlineKeyboardButton("Пикассо", callback_data='picaso')
+    markup.row(btn1, btn2, btn3)
+    btn4 = types.InlineKeyboardButton("Леа Рош", callback_data='roche')
+    btn5 = types.InlineKeyboardButton("Уорхол", callback_data='warhol')
+    btn6 = types.InlineKeyboardButton("Матисс", callback_data='matiss')
+    markup.row(btn4, btn5, btn6)
+    bot.send_message(callback.message.chat.id, 'Доступные стили', reply_markup=markup)
+
+
+@bot.callback_query_handler(func=lambda callback: callback.data == 'load')
+def callback_message(callback):
+    bot.send_message(callback.message.chat.id, 'Загрузите фото со стилем')
+
+
 @bot.callback_query_handler(func=lambda callback: True)
 def callback_message(callback):
     match callback.data:
-        case 'choose':
-            markup = types.InlineKeyboardMarkup()
-            btn1 = types.InlineKeyboardButton("Ван-Гог", callback_data='van_gogh')
-            btn2 = types.InlineKeyboardButton("Моне", callback_data='monet')
-            btn3 = types.InlineKeyboardButton("Пикассо", callback_data='picaso')
-            markup.row(btn1, btn2, btn3)
-            btn4 = types.InlineKeyboardButton("Леа Рош", callback_data='roche')
-            btn5 = types.InlineKeyboardButton("Уорхол", callback_data='warhol')
-            btn6 = types.InlineKeyboardButton("Дали", callback_data='dali')
-            markup.row(btn4, btn5, btn6)
-            bot.send_message(callback.message.chat.id, 'Доступные стили', reply_markup = markup)
-        case 'load':
-            pass
-            #await bot.send_message(callback.message.chat.id, 'Пока не знаю как реализовать')
+
         case 'van_gogh':
             style_image = image_loader('.\styles\Van_Gogh.jpg')
-            try:
-                content_image = image_loader('.\images' + '\content_' + str(callback.message.chat.id) + '.jpg')
-            except Exception as e:
-                bot.reply_to(callback.message, e)
-
-            print(f'working 1 for {callback.message.chat.id}')
-            response = transfer(content_image, style_image)
-            bot.send_photo(callback.message.chat.id, response)
-            remove('.\images' + '\content_' + str(callback.message.chat.id) + '.jpg')
         case 'monet':
             style_image = image_loader('.\styles\Monet.jpg')
-            try:
-                content_image = image_loader('.\images' + '\content_' + str(callback.message.chat.id) + '.jpg')
-            except Exception as e:
-                bot.reply_to(callback.message, e)
-
-            print(f'working 2 for {callback.message.chat.id}')
-            response = transfer(content_image, style_image)
-            bot.send_photo(callback.message.chat.id, response)
-            remove('.\images' + '\content_' + str(callback.message.chat.id) + '.jpg')
         case 'picaso':
             style_image = image_loader('.\styles\Picaso.jpg')
-            try:
-                content_image = image_loader('.\images' + '\content_' + str(callback.message.chat.id) + '.jpg')
-            except Exception as e:
-                bot.reply_to(callback.message, e)
-
-            response = transfer(content_image, style_image)
-            bot.send_photo(callback.message.chat.id, response)
-            remove('.\images' + '\content_' + str(callback.message.chat.id) + '.jpg')
         case 'roche':
             style_image = image_loader('.\styles\Roche.jpg')
-            try:
-                content_image = image_loader('.\images' + '\content_' + str(callback.message.chat.id) + '.jpg')
-            except Exception as e:
-                bot.reply_to(callback.message, e)
-
-            response = transfer(content_image, style_image)
-            bot.send_photo(callback.message.chat.id, response)
-            remove('.\images' + '\content_' + str(callback.message.chat.id) + '.jpg')
         case 'warhol':
             style_image = image_loader('.\styles\Warhol.jpg')
-            try:
-                content_image = image_loader('.\images' + '\content_' + str(callback.message.chat.id) + '.jpg')
-            except Exception as e:
-                bot.reply_to(callback.message, e)
+        case 'matiss':
+            style_image = image_loader('.\styles\matiss.jpg')
+        case _:
+            bot.send_message(callback.message.chat.id, 'Что-то пошло не так, попробуйте еще раз')
+            if path.exists('.\images' + '\content_' + str(callback.message.chat.id) + '.jpg'):
+                remove('.\images' + '\content_' + str(callback.message.chat.id) + '.jpg')
 
-            response = transfer(content_image, style_image)
-            bot.send_photo(callback.message.chat.id, response)
-            remove('.\images' + '\content_' + str(callback.message.chat.id) + '.jpg')
-        case 'dali':
-            style_image = image_loader('.\styles\dali.jpg')
-            try:
-                content_image = image_loader('.\images' + '\content_' + str(callback.message.chat.id) + '.jpg')
-            except Exception as e:
-                bot.reply_to(callback.message, e)
 
-            response = transfer(content_image, style_image)
-            bot.send_photo(callback.message.chat.id, response)
-            remove('.\images' + '\content_' + str(callback.message.chat.id) + '.jpg')
+    try:
+        content_image = image_loader('.\images' + '\content_' + str(callback.message.chat.id) + '.jpg')
+    except Exception as e:
+        bot.reply_to(callback.message, e)
+    bot.send_message(callback.message.chat.id, 'Ожидайте, я работаю')
+    response = transfer(content_image, style_image)
+    bot.send_photo(callback.message.chat.id, response)
+    bot.send_message(callback.message.chat.id, "Если понравилось, можете загрузить еще фото")
+    remove('.\images' + '\content_' + str(callback.message.chat.id) + '.jpg')
 
 
 # bot.delete_webhook()
