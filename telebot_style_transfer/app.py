@@ -17,12 +17,13 @@ from torchvision import transforms
 
 
 TOKEN = getenv('TELEGRAM_BOT_TOKEN') # получаем ТГ токен из системной переменной
-imsize = 224
+DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
+imsize = 480
 style_layers = [1, 6, 11, 20, 25]
 content_layers = [21]
 loss_layers = style_layers + content_layers
-#style_weights = [10**3/n**2 for n in [64, 128, 256, 512, 512]]
-style_weights = [0.05, 0.05, 0.2, 0.3, 0.4]
+style_weights = [10**3/n**2 for n in [64, 128, 256, 512, 512]]
+#style_weights = [0.05, 0.05, 0.2, 0.3, 0.4]
 #style_weights = [0.5]*5
 conten_weights = [1]
 weights = style_weights + conten_weights
@@ -97,6 +98,8 @@ class LayerActivations():
 def extract_layers(layers, img, model=None):
     la = LayerActivations(model, layers)
     la.features = []
+    model = model.to(DEVICE)
+    img = img.to(DEVICE)
     out = model(img)
     la.remove()
     return la.features
@@ -110,7 +113,8 @@ def transfer(content_image, style_image):
 
     opt_image = content_image.data.clone().requires_grad_(True)
 
-    optimizer = torch.optim.Adam([opt_image], lr=8)
+    optimizer = torch.optim.Adam([opt_image], lr=5)
+    #optimizer = torch.optim.LBFGS([opt_image], lr=2)
 
     content_target = extract_layers(content_layers, content_image, model=vgg)
     style_target = extract_layers(style_layers, style_image, model=vgg)
@@ -120,7 +124,7 @@ def transfer(content_image, style_image):
 
     loss_fn = [StyleLoss()] * len(style_layers) + [nn.MSELoss()] * len(content_layers)
 
-    max_iter = 30
+    max_iter = 120
 
     for j in range(max_iter):
         def closure():
@@ -167,7 +171,7 @@ def bot_get_photo(message):
             src = '.\own_styles' + '\style_' + str(message.chat.id) + '.jpg'
             with open(src, 'wb') as new_file:
                 new_file.write(downloaded_file)
-            file = open('.\photo.jpg', 'rb')
+
             style_image = image_loader('.\own_styles' + '\style_' + str(message.chat.id) + '.jpg')
             content_image = image_loader('.\images' + '\content_' + str(message.chat.id) + '.jpg')
             response = transfer(content_image, style_image)
