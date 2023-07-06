@@ -2,7 +2,7 @@
 name = "telebot-style-transfer"
 version = "0.1.0"
 description = ""
-authors = ["NataLobster <nlobanok@yandex.ru>"]
+authors = ["NataLobster"]
 readme = "README.md"
 packages = [{include = "telebot_style_transfer"}]
 
