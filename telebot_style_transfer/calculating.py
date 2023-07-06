@@ -3,9 +3,7 @@ import torch
 from torchvision import models
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
-vgg = models.vgg19(pretrained=True).features
-for param in vgg.parameters():
-    param.requires_grad_(False)
+
 
 class GramMatrix(nn.Module):
     def forward(self, inp):
@@ -50,14 +48,21 @@ def extract_layers(layers, img, model=None):
 
 def transfer(content_image, style_image, content_layers, style_layers, loss_layers, weights):
 
+    vgg = models.vgg19(pretrained=True).features
+    for param in vgg.parameters():
+        param.requires_grad_(False)
+
     opt_image = content_image.data.clone().requires_grad_(True)
 
-    if DEVICE == 'cuda':
+    '''if DEVICE == 'cuda':
        optimizer = torch.optim.LBFGS([opt_image])
        max_iter = 50
     else:
         optimizer = torch.optim.Adam([opt_image], lr=5)
-        max_iter = 200
+        max_iter = 200'''
+
+    optimizer = torch.optim.Adam([opt_image], lr=5)
+    max_iter = 150
 
 
     content_target = extract_layers(content_layers, content_image, model=vgg)
@@ -73,6 +78,7 @@ def transfer(content_image, style_image, content_layers, style_layers, loss_laye
     for j in range(max_iter):
         def closure():
             optimizer.zero_grad()
+            #print(j)
             out = extract_layers(loss_layers, opt_image, model=vgg)
             layer_losses = [weights[i] * loss_fn[i](item, target[i]) for i, item
                             in enumerate(out)]

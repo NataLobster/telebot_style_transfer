@@ -1,25 +1,32 @@
-from os import remove, path
+from os import getenv, remove, path
 
 import telebot
 from telebot import types
 import configparser
 
+import torch
+from torch import nn
+from torchvision import models
+
 import preprocessing
 import calculating
 
 
+#TOKEN = getenv('TELEGRAM_BOT_TOKEN') # получаем ТГ токен из системной переменной
 config = configparser.ConfigParser()  # создаём объекта парсера
 config.read("settings.ini")
 
-#определение переменных
 TOKEN = config["Telegram"]["token"]
+DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 imsize = 480
 style_layers = [1, 6, 11, 20, 25]
 content_layers = [21]
 loss_layers = style_layers + content_layers
 style_weights = [10**3/n**2 for n in [64, 128, 256, 512, 512]]
-content_weights = [1]
-weights = style_weights + content_weights
+#style_weights = [0.05, 0.05, 0.2, 0.3, 0.4]
+#style_weights = [0.5]*5
+conten_weights = [1]
+weights = style_weights + conten_weights
 
 
 bot = telebot.TeleBot(TOKEN)
@@ -32,13 +39,11 @@ def bot_help(message):
                                             ' с одного изображения на другое, '
                                             ' пожалуйста, загрузите фото для обработки')
 
-
 @bot.message_handler(content_types= ['text', 'audio', 'document', 'sticker', 'video', 'video_note', 'voice', 'location',
                                      'contact', 'left_chat_member',' new_chat_title', 'new_chat_photo', 'supergroup_chat_created',
                                      'channel_chat_created', 'migrate_to_chat_id', 'migrate_from_chat_id', 'pinned_message', 'web_app_data'])
 def bot_get_content(message):
-    bot.reply_to(message, 'Я не понимаю никаких сообщений кроме фото. Загрузите фото для обработки')
-
+    bot.reply_to(message, 'Я не понимаю никаких сообщений кроме фото. Загрузите фото для обработки или дождитесь ответа на предыдущее')
 
 @bot.message_handler(content_types=['photo'])
 def bot_get_photo(message):
@@ -48,27 +53,26 @@ def bot_get_photo(message):
         print(file_info, type(file_info), file_info.file_path)
         downloaded_file = bot.download_file(file_info.file_path)
 
-        if path.exists('.\images' + '\content_' + str(message.chat.id) + '.jpg'):
-            src = '.\own_styles' + '\style_' + str(message.chat.id) + '.jpg'
+        if path.exists('./images' + '/content_' + str(message.chat.id) + '.jpg'):
+            src = './own_styles' + '/style_' + str(message.chat.id) + '.jpg'
             with open(src, 'wb') as new_file:
                 new_file.write(downloaded_file)
 
-            style_image = preprocessing.image_loader('.\own_styles' + '\style_' + str(message.chat.id) + '.jpg',imsize)
-            content_image = preprocessing.image_loader('.\images' + '\content_' + str(message.chat.id) + '.jpg',imsize)
+            style_image = preprocessing.image_loader('./own_styles' + '/style_' + str(message.chat.id) + '.jpg', imsize)
+            content_image = preprocessing.image_loader('./images' + '/content_' + str(message.chat.id) + '.jpg', imsize)
             bot.send_message(message.chat.id, 'Ожидайте, я работаю')
-            response = calculating.transfer(content_image, style_image, content_layers, style_layers, loss_layers, weights)
-            response = opt_img = preprocessing.postb(response)
-
+            response = calculating.transfer(content_image, style_image,content_layers, style_layers, loss_layers, weights)
+            response = preprocessing.postb(response)
             bot.send_photo(message.chat.id, response)
             bot.send_message(message.chat.id, "Если понравилось, можете загрузить еще фото")
-            remove('.\images' + '\content_' + str(message.chat.id) + '.jpg')
+            remove('./images' + '/content_' + str(message.chat.id) + '.jpg')
             return
 
         else:
-            src = '.\images' + '\content_' + str(message.chat.id) + '.jpg'
+            src = './images' + '/content_' + str(message.chat.id) + '.jpg'
             with open(src, 'wb') as new_file:
                 new_file.write(downloaded_file)
-            style = True
+
 
     except Exception as e:
         bot.reply_to(message,e )
@@ -103,35 +107,33 @@ def callback_message(callback):
     match callback.data:
 
         case 'van_gogh':
-            style_image = preprocessing.image_loader('.\styles\Van_Gogh.jpg', imsize)
+            style_image = preprocessing.image_loader('./styles/Van_Gogh.jpg', imsize)
         case 'monet':
-            style_image = preprocessing.image_loader('.\styles\Monet.jpg', imsize)
+            style_image = preprocessing.image_loader('./styles/Monet.jpg', imsize)
         case 'picaso':
-            style_image = preprocessing.image_loader('.\styles\Picaso.jpg', imsize)
+            style_image = preprocessing.image_loader('./styles/Picaso.jpg', imsize)
         case 'roche':
-            style_image = preprocessing.image_loader('.\styles\Roche.jpg', imsize)
+            style_image = preprocessing.image_loader('./styles/Roche.jpg', imsize)
         case 'warhol':
-            style_image = preprocessing.image_loader('.\styles\Warhol.jpg', imsize)
+            style_image = preprocessing.image_loader('./styles/Warhol.jpg', imsize)
         case 'matiss':
-            style_image = preprocessing.image_loader('.\styles\matiss.jpg', imsize)
+            style_image = preprocessing.image_loader('./styles/matiss.jpg', imsize)
         case _:
             bot.send_message(callback.message.chat.id, 'Что-то пошло не так, попробуйте еще раз')
-            if path.exists('.\images' + '\content_' + str(callback.message.chat.id) + '.jpg'):
-                remove('.\images' + '\content_' + str(callback.message.chat.id) + '.jpg')
+            if path.exists('./images' + '/content_' + str(callback.message.chat.id) + '.jpg'):
+                remove('./images' + '/content_' + str(callback.message.chat.id) + '.jpg')
 
 
     try:
-        content_image = preprocessing.image_loader('.\images' + '\content_' + str(callback.message.chat.id) + '.jpg',
-                                                   imsize)
+        content_image = preprocessing.image_loader('./images' + '/content_' + str(callback.message.chat.id) + '.jpg', imsize)
     except Exception as e:
         bot.reply_to(callback.message, e)
     bot.send_message(callback.message.chat.id, 'Ожидайте, я работаю')
-    response = calculating.transfer(content_image, style_image, content_layers, style_layers, loss_layers, weights)
-    response = opt_img = preprocessing.postb(response)
-
+    response = calculating.transfer(content_image, style_image,content_layers, style_layers, loss_layers, weights)
+    response = preprocessing.postb(response)
     bot.send_photo(callback.message.chat.id, response)
     bot.send_message(callback.message.chat.id, "Если понравилось, можете загрузить еще фото")
-    remove('.\images' + '\content_' + str(callback.message.chat.id) + '.jpg')
+    remove('./images' + '/content_' + str(callback.message.chat.id) + '.jpg')
 
 
 # bot.delete_webhook()
