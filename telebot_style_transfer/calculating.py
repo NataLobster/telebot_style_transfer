@@ -59,11 +59,10 @@ def transfer(content_image, style_image, content_layers, style_layers, loss_laye
         max_iter = 200
 
     else:
-        optimizer = torch.optim.Adam([opt_image], lr=8)
-        max_iter = 250
+        #optimizer = torch.optim.Adam([opt_image], lr=8)
+        optimizer = torch.optim.LBFGS([opt_image], max_iter=3)
+        max_iter = 100
 
-    # optimizer = torch.optim.Adam([opt_image], lr=5)
-    # max_iter = 150
 
     content_target = extract_layers(content_layers, content_image, model=vgg)
     style_target = extract_layers(style_layers, style_image, model=vgg)
