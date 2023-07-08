@@ -2,6 +2,7 @@
 В работе использовались следующие источники https://proproprogs.ru/neural_network/delaem-perenos-stiley-izobrazheniy-s-pomoshchyu-keras-i-tensorflow, https://russianblogs.com/article/52493331862/
 
 В качестве виртуальной среди использовался poetry
+
 для запуска приложения необходимо первоначально установить необходимые библиотеки, запустив из каталога проекта
 
 poetry install
