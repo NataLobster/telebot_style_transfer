@@ -17,9 +17,10 @@ poetry run app.py
 ````
 При этом файл settings.ini должен содержать ваш токен для телеграм-бота
 
-Пример работы
+***Пример работы***
 
 Исходное изображение
+
 ![photo_2023-07-08_20-55-02](https://github.com/NataLobster/telebot_style_transfer/assets/70448060/8c18bcc3-2de4-4dbe-aeda-18842b8bcd6f)
 + ![Van_Gogh](https://github.com/NataLobster/telebot_style_transfer/assets/70448060/d5fbfb46-31cc-4ea1-ae6c-d5e04770c329) = ![photo_2023-07-08_20-54-33](https://github.com/NataLobster/telebot_style_transfer/assets/70448060/9b034116-3ec4-4f11-b63e-f0ec37acc063)
 + ![Monet](https://github.com/NataLobster/telebot_style_transfer/assets/70448060/7a549909-7998-442c-be2f-b409b4f4ae67) = ![photo_2023-07-08_20-54-38](https://github.com/NataLobster/telebot_style_transfer/assets/70448060/441e63a2-2ba0-4931-83ec-7c88a49dd2f8)
