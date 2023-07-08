@@ -75,7 +75,7 @@ def transfer(content_image, style_image, content_layers, style_layers, loss_laye
     for j in range(max_iter):
         def closure():
             optimizer.zero_grad()
-            print(j)
+            #print(j)
             out = extract_layers(loss_layers, opt_image, model=vgg)
             layer_losses = [weights[i] * loss_fn[i](item, target[i]) for i, item
                             in enumerate(out)]
