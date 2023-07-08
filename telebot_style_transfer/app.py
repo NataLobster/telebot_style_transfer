@@ -22,9 +22,9 @@ imsize = 480
 style_layers = [1, 6, 11, 20, 25]
 content_layers = [21]
 loss_layers = style_layers + content_layers
-style_weights = [10**3/n**2 for n in [64, 128, 256, 512, 512]]
-#style_weights = [0.05, 0.05, 0.2, 0.3, 0.4]
-#style_weights = [0.5]*5
+#style_weights = [10**3/n**2 for n in [64, 128, 256, 512, 512]]
+#style_weights = [0.4, 0.3, 0.2, 0.05, 0.05]
+style_weights = [0.6, 0.4, 0.2, 0.1, 0.05]
 conten_weights = [1]
 weights = style_weights + conten_weights
 
@@ -127,7 +127,7 @@ def callback_message(callback):
     try:
         content_image = preprocessing.image_loader('./images' + '/content_' + str(callback.message.chat.id) + '.jpg', imsize)
     except Exception as e:
-        bot.reply_to(callback.message, e)
+        bot.reply_to(callback.message, 'Что-то пошло не так, попробуйте еще раз')
     bot.send_message(callback.message.chat.id, 'Ожидайте, я работаю')
     response = calculating.transfer(content_image, style_image,content_layers, style_layers, loss_layers, weights)
     response = preprocessing.postb(response)

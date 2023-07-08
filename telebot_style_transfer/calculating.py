@@ -54,16 +54,16 @@ def transfer(content_image, style_image, content_layers, style_layers, loss_laye
 
     opt_image = content_image.data.clone().requires_grad_(True)
 
-    '''if DEVICE == 'cuda':
-       optimizer = torch.optim.LBFGS([opt_image])
-       max_iter = 50
+    if DEVICE == 'cuda':
+        optimizer = torch.optim.LBFGS([opt_image], max_iter=4)
+        max_iter = 200
+
     else:
-        optimizer = torch.optim.Adam([opt_image], lr=5)
-        max_iter = 200'''
+        optimizer = torch.optim.Adam([opt_image], lr=8)
+        max_iter = 250
 
-    optimizer = torch.optim.Adam([opt_image], lr=5)
-    max_iter = 150
-
+    # optimizer = torch.optim.Adam([opt_image], lr=5)
+    # max_iter = 150
 
     content_target = extract_layers(content_layers, content_image, model=vgg)
     style_target = extract_layers(style_layers, style_image, model=vgg)
@@ -73,24 +73,20 @@ def transfer(content_image, style_image, content_layers, style_layers, loss_laye
 
     loss_fn = [StyleLoss()] * len(style_layers) + [nn.MSELoss()] * len(content_layers)
 
-    #max_iter = 120
-
     for j in range(max_iter):
         def closure():
             optimizer.zero_grad()
-            #print(j)
+            print(j)
             out = extract_layers(loss_layers, opt_image, model=vgg)
             layer_losses = [weights[i] * loss_fn[i](item, target[i]) for i, item
                             in enumerate(out)]
             loss = sum(layer_losses)
             loss.backward()
 
-
             return loss
 
         optimizer.step(closure)
 
     opt_img = opt_image.data.clone().squeeze(0)
-    #opt_img = preprocessing.postb(opt_img)
 
     return opt_img
